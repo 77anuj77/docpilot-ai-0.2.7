@@ -1,6 +1,6 @@
 # ParseDoc
 
-![ParseDoc](parsedoc.png)
+![ParseDoc](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.48.08%E2%80%AFPM.png)
 
 [![PyPI version](https://img.shields.io/pypi/v/docpilot-ai.svg)](https://pypi.org/project/docpilot-ai/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/docpilot-ai.svg)](https://pypi.org/project/docpilot-ai/)
@@ -24,11 +24,11 @@ ParseDoc turns PDFs, Word docs, PowerPoint decks, HTML pages, plain text, and im
 
 ## Screenshots / Proofs
 
-![Proof 1](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2010.04.48%20PM.png)
+![Proof 1](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2010.04.48%E2%80%AFPM.png)
 
-![Proof 2](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.47.58%20PM.png)
+![Proof 2](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.47.58%E2%80%AFPM.png)
 
-![Proof 3](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.48.08%20PM.png)
+![Proof 3](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.48.08%E2%80%AFPM.png)
 
 ---
 
