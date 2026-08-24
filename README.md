@@ -15,10 +15,9 @@ ParseDoc turns PDFs, Word docs, PowerPoint decks, HTML pages, plain text, and im
 
 ## Demo
 
-<video src="src/parsedoc/proofs/docpilot-ai.mp4" controls width="720">
-  Your browser does not support the video tag. You can download the demo
-  <a href="src/parsedoc/proofs/docpilot-ai.mp4">here</a>.
-</video>
+[![Demo Video](https://img.youtube.com/vi/Cz8ORg6Fs1Y/0.jpg)](https://youtu.be/Cz8ORg6Fs1Y)
+
+Watch the demo on YouTube: https://youtu.be/Cz8ORg6Fs1Y
 
 ---
 
