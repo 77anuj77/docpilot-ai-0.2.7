@@ -1,0 +1,25 @@
+# Build artifacts
+dist/
+*.egg-info/
+build/
+__pycache__/
+*.pyc
+.ruff_cache/
+.mypy_cache/
+
+# Test / conversion outputs (keep sources & assets)
+out_test/
+batch_out/
+quotation.md
+quotation_assets/
+*.md.out
+
+# Large media (exclude the 689 MB demo video from git; link it instead)
+*.mp4
+src/parsedoc/proofs/*.mp4
+
+# Stray local entry-point script
+parsedoc_cli.py
+
+# Env / secrets
+.env
