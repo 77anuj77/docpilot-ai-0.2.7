@@ -28,7 +28,6 @@ ParseDoc turns PDFs, Word docs, PowerPoint decks, HTML pages, plain text, and im
 
 ![Proof 2](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.47.58%E2%80%AFPM.png)
 
-![Proof 3](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.48.08%E2%80%AFPM.png)
 
 ---
 
