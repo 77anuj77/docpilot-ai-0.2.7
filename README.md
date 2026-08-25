@@ -1,6 +1,6 @@
 # ParseDoc
 
-![ParseDoc](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.48.08%E2%80%AFPM.png)
+![ParseDoc](parsedoc.png)
 
 [![PyPI version](https://img.shields.io/pypi/v/docpilot-ai.svg)](https://pypi.org/project/docpilot-ai/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/docpilot-ai.svg)](https://pypi.org/project/docpilot-ai/)
