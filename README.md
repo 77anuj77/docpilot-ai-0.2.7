@@ -21,13 +21,11 @@ Watch the demo on YouTube: https://youtu.be/Cz8ORg6Fs1Y
 
 ---
 
-## Screenshots / Proofs
+## Screenshots
 
 ![Proof 1](src/parsedoc/proofs/proof1.png)
 
 ![Proof 2](src/parsedoc/proofs/proof2.png)
-
-![Proof 3](src/parsedoc/proofs/proof3.png)
 
 
 ---
