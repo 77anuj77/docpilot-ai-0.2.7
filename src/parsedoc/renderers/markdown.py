@@ -14,9 +14,10 @@ def _render_block(block: Block) -> str:
         return block.text or ""
     if btype == "list":
         items = block.items or []
+        indent = "  " * max(0, (block.level or 0))
         if block.ordered:
-            return "\n".join(f"{i + 1}. {item}" for i, item in enumerate(items))
-        return "\n".join(f"- {item}" for item in items)
+            return "\n".join(f"{indent}{i + 1}. {item}" for i, item in enumerate(items))
+        return "\n".join(f"{indent}- {item}" for item in items)
     if btype == "table":
         return _render_table(block.headers or [], block.rows or [])
     if btype == "code":

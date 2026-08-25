@@ -306,6 +306,44 @@ def config_command(
         console.print(f"Unknown config command: {command}")
 
 
+@app.command(name="image")
+def image_command(
+    input_file: str = typer.Argument(..., help="Input DOCX file"),
+    output: str = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output directory for extracted images (created in the current directory by default)",
+    ),
+):
+    """Extract embedded images from a DOCX file into a directory.
+
+    By default images are written to '<filename>_assets' in the current
+    working directory. Use -o/--output to choose another folder.
+    """
+    show_header()
+    if not os.path.exists(input_file):
+        typer.echo(f"Error: Input file '{input_file}' not found")
+        raise typer.Exit(code=1)
+
+    from .extraction.images import extract_docx_images
+
+    stem = Path(input_file).stem
+    out_dir = output or os.path.join(os.getcwd(), f"{stem}_assets")
+    try:
+        refs = extract_docx_images(input_file, out_dir)
+    except Exception as e:
+        typer.echo(f"Error extracting images: {e}")
+        raise typer.Exit(code=1)
+
+    if not refs:
+        typer.echo("No images found in the document.")
+        return
+    typer.echo(f"✓ Extracted {len(refs)} image(s) to: {out_dir}")
+    for r in refs:
+        typer.echo(f"  - {r['src']}")
+
+
 @app.command()
 def version():
     """Show version information."""

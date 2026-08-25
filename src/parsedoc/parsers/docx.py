@@ -44,21 +44,65 @@ class DOCXParser(BaseParser):
             return "unknown"
 
     @staticmethod
-    def _inline_text(para) -> str:
-        """Render a paragraph's runs, preserving bold/italic/underline."""
+    def _inline_segments(para, doc=None):
+        """Yield (text, bold, italic, underline, url) for each run, resolving
+        hyperlinks to their target URLs so links survive into Markdown."""
+        from docx.oxml.ns import qn
+
+        try:
+            rels = doc.part.rels if doc is not None else {}
+        except Exception:
+            rels = {}
+
+        def run_text(r):
+            return "".join(t.text or "" for t in r.findall(qn("w:t")))
+
+        def run_fmt(r):
+            rpr = r.find(qn("w:rPr"))
+            bold = italic = underline = False
+            if rpr is not None:
+                bold = rpr.find(qn("w:b")) is not None
+                italic = rpr.find(qn("w:i")) is not None
+                underline = rpr.find(qn("w:u")) is not None
+            return bold, italic, underline
+
+        segments = []
+        for child in para._p:
+            if child.tag == qn("w:hyperlink"):
+                rid = child.get(qn("w:relId")) or child.get(qn("r:id"))
+                url = None
+                if rid and rid in rels:
+                    try:
+                        url = rels[rid].target_ref
+                    except Exception:
+                        url = None
+                for r in child.findall(qn("w:r")):
+                    segments.append((run_text(r), *run_fmt(r), url))
+            elif child.tag == qn("w:r"):
+                segments.append((run_text(child), *run_fmt(child), None))
+        if not segments:
+            for r in para.runs:
+                segments.append((r.text or "", bool(r.bold), bool(r.italic), False, None))
+        return segments
+
+    @staticmethod
+    def _inline_text(para, doc=None) -> str:
+        """Render a paragraph's runs, preserving bold/italic/underline/links."""
         parts = []
-        for run in para.runs:
-            t = run.text
-            if not t:
+        for text, bold, italic, underline, url in DOCXParser._inline_segments(para, doc):
+            if not text:
                 continue
-            if run.bold and run.italic:
+            t = text
+            if bold and italic:
                 t = f"***{t}***"
-            elif run.bold:
+            elif bold:
                 t = f"**{t}**"
-            elif run.italic:
+            elif italic:
                 t = f"*{t}*"
-            if run.underline:
+            if underline:
                 t = f"<u>{t}</u>"
+            if url:
+                t = f"[{t}]({url})"
             parts.append(t)
         if parts:
             return "".join(parts).strip()
@@ -66,14 +110,27 @@ class DOCXParser(BaseParser):
 
     @staticmethod
     def _list_info(para):
-        """Return (is_list, ordered) for a paragraph."""
+        """Return (is_list, ordered, level) for a paragraph."""
         style = (para.style.name if para.style else "") or ""
-        if style.startswith("List") or "Bullet" in style or "Number" in style:
-            return True, ("Number" in style)
         pPr = para._p.pPr
-        if pPr is not None and pPr.numPr is not None:
-            return True, False
-        return False, False
+        level = 0
+        if pPr is not None and pPr.numPr is not None and pPr.numPr.ilvl is not None:
+            try:
+                level = int(pPr.numPr.ilvl.val)
+            except (TypeError, ValueError):
+                level = 0
+        # Style-based levels, e.g. "List Bullet 2" -> nesting level 1.
+        m = re.search(r"(?:Bullet|Number)\s*(\d+)", style)
+        if m:
+            level = max(level, int(m.group(1)) - 1)
+        is_list = (
+            style.startswith("List")
+            or "Bullet" in style
+            or "Number" in style
+            or (pPr is not None and pPr.numPr is not None)
+        )
+        ordered = "Number" in style
+        return is_list, ordered, level
 
     def extract(self, input_path: str) -> Dict:
         self.logger.info("Extracting DOCX content with python-docx")
@@ -112,23 +169,30 @@ class DOCXParser(BaseParser):
 
                 para = item
                 style = (para.style.name if para.style else "") or ""
-                txt = self._inline_text(para)
+                txt = self._inline_text(para, doc)
                 if not txt:
                     continue
-                is_list, ordered = self._list_info(para)
+                is_list, ordered, list_level = self._list_info(para)
 
                 if is_list:
                     item_text = txt
-                    if current_list and current_list.get("ordered") == ordered:
+                    if (
+                        current_list
+                        and current_list.get("ordered") == ordered
+                        and current_list.get("level") == list_level
+                    ):
                         current_list["items"].append(item_text)
                     else:
                         flush_list()
                         current_list = {
                             "type": "list",
                             "ordered": ordered,
+                            "level": list_level,
                             "items": [item_text],
                         }
-                    text_lines.append(("1. " if ordered else "- ") + item_text)
+                    text_lines.append(
+                        ("  " * list_level) + (("1. " if ordered else "- ") + item_text)
+                    )
                     continue
 
                 flush_list()
