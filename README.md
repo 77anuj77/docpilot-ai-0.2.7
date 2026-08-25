@@ -1,6 +1,6 @@
 # ParseDoc
 
-![ParseDoc](src/parsedoc/proofs/Screenshot%202026-08-25%20at%209.35.43%E2%80%AFAM.png)
+![ParseDoc](src/parsedoc/proofs/header.png)
 
 [![PyPI version](https://img.shields.io/pypi/v/docpilot-ai.svg)](https://pypi.org/project/docpilot-ai/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/docpilot-ai.svg)](https://pypi.org/project/docpilot-ai/)
@@ -23,9 +23,11 @@ Watch the demo on YouTube: https://youtu.be/Cz8ORg6Fs1Y
 
 ## Screenshots / Proofs
 
-![Proof 1](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2010.04.48%E2%80%AFPM.png)
+![Proof 1](src/parsedoc/proofs/proof1.png)
 
-![Proof 2](src/parsedoc/proofs/Screenshot%202026-08-24%20at%2011.47.58%E2%80%AFPM.png)
+![Proof 2](src/parsedoc/proofs/proof2.png)
+
+![Proof 3](src/parsedoc/proofs/proof3.png)
 
 
 ---

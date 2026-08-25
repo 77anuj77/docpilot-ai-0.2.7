@@ -23,3 +23,6 @@ parsedoc_cli.py
 
 # Env / secrets
 .env
+
+# macOS
+.DS_Store
