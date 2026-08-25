@@ -30,6 +30,37 @@ def save_pdf_image(pdf_path: str, xref: int, out_path: str) -> bool:
         return False
 
 
+def extract_pdf_images_to_dir(pdf_path: str, assets_dir: str) -> list:
+    """Save every embedded PDF image to ``assets_dir`` and return ref dicts.
+
+    Each reference has ``src`` (absolute path on disk) and ``alt``.
+    """
+    import fitz  # PyMuPDF
+
+    os.makedirs(assets_dir, exist_ok=True)
+    refs: list = []
+    try:
+        with fitz.open(pdf_path) as doc:
+            idx = 1
+            for page_num in range(doc.page_count):
+                for img in doc[page_num].get_images(full=True):
+                    xref = img[0]
+                    ext = "png"
+                    try:
+                        if doc.xref_stream(xref) and doc.extract_image(xref).get("image"):
+                            ext = doc.extract_image(xref).get("ext") or "png"
+                    except Exception:
+                        pass
+                    fname = f"image-{idx:03d}.{ext}"
+                    out_path = os.path.join(assets_dir, fname)
+                    if save_pdf_image(pdf_path, xref, out_path):
+                        refs.append({"src": out_path, "alt": f"Image {idx} (page {page_num + 1})"})
+                        idx += 1
+    except Exception:
+        pass
+    return refs
+
+
 def extract_docx_images(docx_path: str, assets_dir: str) -> list:
     """Save embedded DOCX images to ``assets_dir`` and return reference dicts.
 

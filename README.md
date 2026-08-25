@@ -37,7 +37,7 @@ Watch the demo on YouTube: https://youtu.be/Cz8ORg6Fs1Y
 - **AI structuring** (optional): `local`, `ai`, or `hybrid` modes.
 - **Pluggable AI providers**: OpenAI-compatible (vLLM/LM Studio/OpenRouter), OpenAI, Google Gemini, Ollama (native), and LM Studio.
 - **Document fidelity**: preserves headings, bold/italic/underline, hyperlinks, nested lists, and keeps tables in their original position.
-- **Image extraction**: `parsedoc image` pulls embedded images from a DOCX into a folder in your working directory (or a path you choose).
+ - **Image extraction**: `parsedoc image` pulls embedded images from a DOCX or PDF into a folder in your working directory (or a path you choose).
 - **OCR**: Tesseract-backed text extraction for scanned PDFs and images.
 - **Multiple output formats**: `markdown` (default), `json`, `html`, `text`.
 
@@ -67,8 +67,9 @@ parsedoc batch . -p "*.docx"
 # Inspect a document's structure
 parsedoc inspect input.pdf --format summary
 
-# Extract all images embedded in a DOCX into <filename>_assets/ (in the cwd)
+# Extract all images embedded in a DOCX or PDF into <filename>_assets/ (in the cwd)
 parsedoc image input.docx
+parsedoc image input.pdf
 
 # Extract images into a specific folder
 parsedoc image input.docx -o ./my_images

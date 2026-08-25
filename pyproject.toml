@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "docpilot-ai"
-version = "0.2.10"
+version = "0.2.11"
 description = "AI-powered local-first CLI that converts documents into clean, structured, AI-ready Markdown"
 requires-python = ">=3.10"
 license = { text = "MIT" }
