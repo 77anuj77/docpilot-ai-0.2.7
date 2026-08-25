@@ -8,7 +8,10 @@ def extract_pdf_text(pdf_path: str) -> Dict[str, object]:
 
     Returns a dict with ``text``, ``layout``, and ``page_count`` keys.
     """
-    import fitz  # PyMuPDF
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz  # PyMuPDF
 
     text_parts: List[str] = []
     layout_parts: List[str] = []

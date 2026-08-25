@@ -232,7 +232,10 @@ class Pipeline:
         return extracted
 
     def _ocr_pdf(self, input_path: str, provider) -> str:
-        import fitz  # PyMuPDF
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz  # PyMuPDF
 
         pages: List[str] = []
         with fitz.open(input_path) as doc:

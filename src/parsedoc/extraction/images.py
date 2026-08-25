@@ -5,7 +5,10 @@ import os
 
 def extract_pdf_images(pdf_path: str) -> list:
     """Return a list of image references (page + xref) from a PDF."""
-    import fitz  # PyMuPDF
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz  # PyMuPDF
 
     images = []
     with fitz.open(pdf_path) as doc:
@@ -17,7 +20,10 @@ def extract_pdf_images(pdf_path: str) -> list:
 
 def save_pdf_image(pdf_path: str, xref: int, out_path: str) -> bool:
     """Save a single PDF image (by xref) to ``out_path``."""
-    import fitz  # PyMuPDF
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz  # PyMuPDF
 
     try:
         with fitz.open(pdf_path) as doc:
@@ -35,7 +41,10 @@ def extract_pdf_images_to_dir(pdf_path: str, assets_dir: str) -> list:
 
     Each reference has ``src`` (absolute path on disk) and ``alt``.
     """
-    import fitz  # PyMuPDF
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz  # PyMuPDF
 
     os.makedirs(assets_dir, exist_ok=True)
     refs: list = []

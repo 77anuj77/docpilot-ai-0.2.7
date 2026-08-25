@@ -13,7 +13,10 @@ class PDFParser(BaseParser):
 
     def detect_format(self, input_path: str) -> str:
         try:
-            import fitz  # PyMuPDF
+            try:
+                import pymupdf as fitz
+            except ImportError:
+                import fitz  # PyMuPDF
 
             with fitz.open(input_path):
                 return "pdf"

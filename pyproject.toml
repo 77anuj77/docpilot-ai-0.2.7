@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "docpilot-ai"
-version = "0.2.12"
+version = "0.2.13"
 description = "AI-powered local-first CLI that converts documents into clean, structured, AI-ready Markdown"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -31,7 +31,7 @@ dependencies = [
     "rich>=13.0",
     "httpx>=0.27",
     "Pillow>=10.0",
-    "PyMuPDF>=1.23",
+    "pymupdf>=1.23",
     "python-docx>=1.1",
     "python-pptx>=0.6",
     "beautifulsoup4>=4.12",
