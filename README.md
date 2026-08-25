@@ -77,6 +77,9 @@ parsedoc image input.docx -o ./my_images
 # Show configuration
 parsedoc config list
 
+# Reset to fully local mode (disables AI - useful when your API key expires)
+parsedoc reset
+
 # Banner + version
 parsedoc version
 ```

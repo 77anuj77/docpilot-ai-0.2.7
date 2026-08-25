@@ -356,6 +356,22 @@ def image_command(
 
 
 @app.command()
+def reset():
+    """Reset configuration to local mode (AI disabled).
+
+    Use this when your AI provider/API key has expired or you want fully
+    offline, deterministic conversion. It rewrites the config file with
+    default settings and AI turned off, so every run uses local structuring.
+    """
+    show_header()
+    config = Config()
+    config.ai_enabled = False
+    config.save_to_file()
+    typer.echo("✓ Configuration reset: AI disabled, running in local mode.")
+    typer.echo("  Re-enable AI later with: parsedoc config set --key ai_enabled --value true")
+
+
+@app.command()
 def version():
     """Show version information."""
     show_header()
