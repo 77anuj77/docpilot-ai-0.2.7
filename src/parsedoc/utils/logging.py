@@ -21,7 +21,7 @@ def setup_logging(verbose: bool = False, quiet: bool = False):
     logging.basicConfig(
         level=level,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        stream=sys.stdout,
+        stream=sys.stderr,
     )
     return logging.getLogger("parsedoc")
 

@@ -85,7 +85,8 @@ def convert(
     verbose: bool = typer.Option(False, "--verbose", help="Verbose mode"),
 ):
     """Convert a document to structured Markdown."""
-    show_header()
+    if output:
+        show_header()
     if not os.path.exists(input_file):
         typer.echo(f"Error: Input file '{input_file}' not found")
         raise typer.Exit(code=1)
@@ -114,17 +115,17 @@ def convert(
     if output:
         Path(output).write_text(result, encoding="utf-8")
         typer.echo(f"✓ Created: {output}")
+        show_summary(
+            {
+                "input_file": input_file,
+                "output_format": format,
+                "processing_mode": mode,
+                "status": "success",
+            }
+        )
     else:
+        # Print only the payload to stdout so it can be piped (e.g. to jq).
         typer.echo(result)
-
-    show_summary(
-        {
-            "input_file": input_file,
-            "output_format": format,
-            "processing_mode": mode,
-            "status": "success",
-        }
-    )
 
 
 @app.command()
@@ -186,7 +187,8 @@ def inspect(
     format: str = typer.Option("json", "--format", "-f", help="Inspection format (json, summary)"),
 ):
     """Inspect a document file structure."""
-    show_header()
+    if format != "json":
+        show_header()
     if not os.path.exists(input_file):
         typer.echo(f"Error: Input file '{input_file}' not found")
         raise typer.Exit(code=1)
