@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 
 from ..core.config import Config
 from ..extraction.tables import normalize_table
+from ..schema.document import Document
 from ..schema.validation import validate_document
 from ..utils.logging import get_logger
 from .base import BaseParser
@@ -91,7 +92,7 @@ class HTMLParser(BaseParser):
                 blocks.append({"type": "code", "code": tag.get_text()})
         return blocks
 
-    def to_document(self, extracted: Dict, input_path: str = "") -> "Document":
+    def to_document(self, extracted: Dict, input_path: str = "") -> Document:
         blocks = [b for b in extracted.get("blocks", []) if isinstance(b, dict) and "type" in b]
         if not blocks:
             blocks = self._paragraph_blocks(extracted.get("text", ""))
