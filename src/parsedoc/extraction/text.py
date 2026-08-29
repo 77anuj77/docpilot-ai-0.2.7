@@ -1,6 +1,49 @@
 """ParseDoc Text Extraction helpers"""
 
+import re
 from typing import Dict, List
+
+
+def _page_text_words(page) -> str:
+    """Reconstruct a page's text from word bounding boxes.
+
+    PyMuPDF's plain ``get_text("text")`` drops spaces in justified/space-less
+    PDFs (e.g. "AssamBihar"). Using ``get_text("words")`` and joining by
+    x/y position restores word spacing far more reliably.
+    """
+    words = page.get_text("words")  # x0, y0, x1, y1, word, block, line, wno
+    if not words:
+        return page.get_text("text") or ""
+    words.sort(key=lambda w: (round(w[1]), w[0]))
+    lines: List[List] = []
+    current: List = []
+    current_y: int = None
+    for w in words:
+        y = round(w[1])
+        if current_y is None:
+            current_y = y
+        if abs(y - current_y) <= 2:
+            current.append(w)
+        else:
+            lines.append(current)
+            current_y = y
+            current = [w]
+    if current:
+        lines.append(current)
+    return "\n".join(" ".join(x[4] for x in ln) for ln in lines)
+
+
+def _fix_pdf_text_artifacts(text: str) -> str:
+    """Repair common PyMuPDF extraction artifacts for regulatory PDFs.
+
+    - The degree sign is often extracted as a stray "0" (63°C -> 630 C).
+    - Common concatenated legal phrases.
+    """
+    # 63°C -> "630 C" / "71.5°C" -> "71.50C" / "10°C" -> "100 C" etc.
+    text = re.sub(r"(\d)0\s*[o°]?C\b", r"\1°C", text, flags=re.IGNORECASE)
+    text = text.replace("Notmorethan", "Not more than")
+    text = text.replace("Notlessthan", "Not less than")
+    return text
 
 
 def extract_pdf_text(pdf_path: str) -> Dict[str, object]:
@@ -18,7 +61,7 @@ def extract_pdf_text(pdf_path: str) -> Dict[str, object]:
     with fitz.open(pdf_path) as doc:
         page_count = doc.page_count
         for i, page in enumerate(doc):
-            text_parts.append(page.get_text("text"))
+            text_parts.append(_fix_pdf_text_artifacts(_page_text_words(page)))
             layout_parts.append(f"Page {i + 1}")
     return {
         "text": "\n".join(text_parts).strip(),
