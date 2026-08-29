@@ -1,7 +1,24 @@
 """ParseDoc Text Extraction helpers"""
 
 import re
-from typing import Dict, List
+from typing import Dict, List, Tuple
+
+
+# Common OCR / typographical errors seen in regulatory Gazette PDFs.
+# Conservative: only exact, unambiguous misspellings are corrected.
+_PDF_TYPO_FIXES = {
+    "regulatiions": "regulations",
+    "hydorxide": "hydroxide",
+    "Boudouins": "Boudouin's",
+    "rancidityand": "rancidity and",
+    "basisBasis": "basis Basis",
+    "Adminidive": "Andaman",
+    "Orisssa": "Orissa",
+    "Kerela": "Kerala",
+    "Lakshwadeep": "Lakshadweep",
+    "Meghalya": "Meghalaya",
+    "AssamBihar": "Assam, Bihar",
+}
 
 
 def _page_text_words(page) -> str:
@@ -37,13 +54,132 @@ def _fix_pdf_text_artifacts(text: str) -> str:
     """Repair common PyMuPDF extraction artifacts for regulatory PDFs.
 
     - The degree sign is often extracted as a stray "0" (63°C -> 630 C).
-    - Common concatenated legal phrases.
+    - Concatenated legal phrases ("Notmorethan" -> "Not more than").
+    - Stray LaTeX-ish math markup from structured PDFs.
+    - A small set of unambiguous OCR typos.
     """
+    # Strip math delimiters and repair degree superscripts like $115^{0}C$.
+    text = re.sub(r"\$\s*(\d+(?:\.\d+)?)\s*\^\s*\{\s*0\s*\}\s*([Cc])\s*\$", r"\1°\2", text)
+    text = text.replace("\\times", "×")
+    text = text.replace("$", " ")
     # 63°C -> "630 C" / "71.5°C" -> "71.50C" / "10°C" -> "100 C" etc.
     text = re.sub(r"(\d)0\s*[o°]?C\b", r"\1°C", text, flags=re.IGNORECASE)
     text = text.replace("Notmorethan", "Not more than")
     text = text.replace("Notlessthan", "Not less than")
+    # Spacing between a number and a unit word.
+    text = re.sub(
+        r"(\d)\s*(percent|per\s*cent|mg|µg|mcg|g|kg|ml|l|ppm)\b",
+        r"\1 \2",
+        text,
+        flags=re.IGNORECASE,
+    )
+    # Unambiguous OCR typos.
+    for bad, good in _PDF_TYPO_FIXES.items():
+        text = text.replace(bad, good)
+    # Collapse the double spaces introduced above.
+    text = re.sub(r" {2,}", " ", text)
     return text
+
+
+def _extract_page_tables(page) -> Tuple[List[List[List[str]]], List[Tuple[float, float]]]:
+    """Extract column-aligned tables from a page using word positions.
+
+    Many regulatory PDFs lay tables out as whitespace-separated columns with no
+    vector rules, so PyMuPDF's ``find_tables`` cannot see them. We detect runs
+    of consecutive lines that each contain >=2 aligned columns and reconstruct
+    rows. Returns (tables, skipped_y_ranges) where ``skipped_y_ranges`` are the
+    (y0, y1) bands covered by tables so paragraph text can exclude them.
+    """
+    words = page.get_text("words")  # x0, y0, x1, y1, word, block, line, wno
+    if not words:
+        return [], []
+    # Cluster word start-x positions into column lanes.
+    x0s = sorted({round(w[0], 1) for w in words})
+    if not x0s:
+        return [], []
+    col_gap = 22.0
+    clusters: List[List[float]] = [[x0s[0]]]
+    for x in x0s[1:]:
+        if x - clusters[-1][-1] > col_gap:
+            clusters.append([x])
+        else:
+            clusters[-1].append(x)
+    col_centers = [sum(c) / len(c) for c in clusters]
+
+    # Group words into lines by y.
+    words.sort(key=lambda w: (round(w[1]), w[0]))
+    lines: List[List] = []
+    cur: List = []
+    cur_y: int = None
+    for w in words:
+        y = round(w[1])
+        if cur_y is None:
+            cur_y = y
+        if abs(y - cur_y) <= 3:
+            cur.append(w)
+        else:
+            lines.append(cur)
+            cur_y = y
+            cur = [w]
+    if cur:
+        lines.append(cur)
+
+    def assign_cols(line_words):
+        row = {}
+        for w in line_words:
+            cx = (w[0] + w[2]) / 2.0
+            best = min(range(len(col_centers)), key=lambda i: abs(col_centers[i] - cx))
+            if abs(col_centers[best] - cx) <= col_gap:
+                row.setdefault(best, []).append(w[4])
+        return row
+
+    tables: List[List[List[str]]] = []
+    skipped: List[Tuple[float, float]] = []
+    run: List[List] = []
+    run_y: Tuple[float, float] = (1e9, -1e9)
+    for ln in lines:
+        row = assign_cols(ln)
+        ncols = len(row)
+        if ncols >= 2:
+            ordered = [(" ".join(row.get(i, []))).strip() for i in range(len(col_centers))]
+            run.append(ordered)
+            run_y = (min(run_y[0], min(w[1] for w in ln)), max(run_y[1], max(w[3] for w in ln)))
+        else:
+            if len(run) >= 4:
+                tables.append(run)
+                skipped.append(run_y)
+            run = []
+            run_y = (1e9, -1e9)
+    if len(run) >= 4:
+        tables.append(run)
+        skipped.append(run_y)
+    return tables, skipped
+
+
+def _paragraph_text_excluding(page, skipped: List[Tuple[float, float]]) -> str:
+    """Reconstruct paragraph text, skipping y-bands covered by tables."""
+    words = page.get_text("words")
+    if not words:
+        return page.get_text("text") or ""
+    lines: List[List] = []
+    cur: List = []
+    cur_y: int = None
+    for w in sorted(words, key=lambda w: (round(w[1]), w[0])):
+        y = round(w[1])
+        in_table = any(y0 - 3 <= w[1] <= y1 + 3 for (y0, y1) in skipped)
+        if in_table:
+            continue
+        if cur_y is None:
+            cur_y = y
+        if abs(y - cur_y) <= 2:
+            cur.append(w)
+        else:
+            lines.append(cur)
+            cur_y = y
+            cur = [w]
+    if cur:
+        lines.append(cur)
+    return "\n".join(" ".join(x[4] for x in ln) for ln in lines)
 
 
 def extract_pdf_text(pdf_path: str) -> Dict[str, object]:
@@ -58,15 +194,22 @@ def extract_pdf_text(pdf_path: str) -> Dict[str, object]:
 
     text_parts: List[str] = []
     layout_parts: List[str] = []
+    all_tables: List[List[List[str]]] = []
     with fitz.open(pdf_path) as doc:
         page_count = doc.page_count
         for i, page in enumerate(doc):
-            text_parts.append(_fix_pdf_text_artifacts(_page_text_words(page)))
+            tables, skipped = _extract_page_tables(page)
+            para = _fix_pdf_text_artifacts(_paragraph_text_excluding(page, skipped))
+            text_parts.append(para)
             layout_parts.append(f"Page {i + 1}")
+            for tbl in tables:
+                fixed_rows = [[_fix_pdf_text_artifacts(c) for c in row] for row in tbl]
+                all_tables.append(fixed_rows)
     return {
         "text": "\n".join(text_parts).strip(),
         "layout": "\n".join(layout_parts),
         "page_count": page_count,
+        "tables": all_tables,
     }
 
 

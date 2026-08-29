@@ -30,7 +30,7 @@ class PDFParser(BaseParser):
         except Exception as e:
             self.logger.error(f"PDF extraction failed: {e}")
             return {"text": "", "layout": "", "tables": [], "images": [], "page_count": 0}
-        data["tables"] = []
+        data["tables"] = data.get("tables") or []
         data["images"] = extract_pdf_images(input_path)
         data["quality"] = assess_text_quality(data.get("text", ""))
         return data
