@@ -59,11 +59,15 @@ def _fix_pdf_text_artifacts(text: str) -> str:
     - A small set of unambiguous OCR typos.
     """
     # Strip math delimiters and repair degree superscripts like $115^{0}C$.
-    text = re.sub(r"\$\s*(\d+(?:\.\d+)?)\s*\^\s*\{\s*0\s*\}\s*([Cc])\s*\$", r"\1°\2", text)
+    # Also swallows an optional trailing " C" that some PDFs emit after the close.
+    text = re.sub(
+        r"\$\s*(\d+(?:\.\d+)?)\s*\^\s*\{\s*0\s*\}\s*([Cc])\s*\$(?:\s*[Cc])?", r"\1°C", text
+    )
     text = text.replace("\\times", "×")
     text = text.replace("$", " ")
     # 63°C -> "630 C" / "71.5°C" -> "71.50C" / "10°C" -> "100 C" etc.
-    text = re.sub(r"(\d)0\s*[o°]?C\b", r"\1°C", text, flags=re.IGNORECASE)
+    # Only fire when there is no pre-existing degree sign (so "130°C" is left alone).
+    text = re.sub(r"(\d)0\s*C\b", r"\1°C", text, flags=re.IGNORECASE)
     text = text.replace("Notmorethan", "Not more than")
     text = text.replace("Notlessthan", "Not less than")
     # Spacing between a number and a unit word.
